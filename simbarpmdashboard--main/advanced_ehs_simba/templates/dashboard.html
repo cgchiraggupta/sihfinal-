@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartDrill Pro | AI Rock Detection System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0b1120;
+            --bg-secondary: #1e293b;
+            --bg-card: #151e32;
+            --bg-terminal: #000000;
+            --accent-orange: #f97316;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --terminal-green: #22c55e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* --- Header --- */
+        .header {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(11, 17, 32, 0.95);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo span { color: var(--accent-orange); }
+
+        .system-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- Layout --- */
+        .main {
+            padding: 2rem;
+            max-width: 1800px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1400px) {
+            .main { grid-template-columns: 300px 1fr; }
+            .right-sidebar { display: none; }
+        }
+        
+        @media (max-width: 1024px) {
+            .main { grid-template-columns: 1fr; }
+            .left-sidebar { display: none; }
+        }
+
+        /* --- Cards & Panels --- */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 1rem;
+            background: rgba(30, 41, 59, 0.5);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-body { padding: 1.5rem; }
+
+        /* --- Left Sidebar: Controls --- */
+        .control-group { margin-bottom: 1.5rem; }
+        
+        .control-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .sim-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sim-btn:hover {
+            border-color: var(--accent-orange);
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        .sim-btn.active {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+            color: white;
+        }
+
+        .sim-btn-meta {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* --- Center: Visualization --- */
+        .visual-pipeline {
+            height: 120px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 2rem;
+        }
+
+        .pipeline-step {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin: 0 auto 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .pipeline-step.active .step-icon {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .pipeline-line {
+            position: absolute;
+            top: 40px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: var(--border);
+            z-index: 1;
+        }
+
+        .pipeline-progress {
+            position: absolute;
+            top: 40px;
+            left: 10%;
+            width: 0%;
+            height: 2px;
+            background: var(--accent-green);
+            z-index: 1;
+            transition: width 0.5s ease-out;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .big-stat {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .prediction-box {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.5), rgba(20, 30, 45, 0.8));
+            border-left: 4px solid var(--accent-orange);
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .prediction-material {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent-orange);
+            margin-bottom: 0.5rem;
+        }
+
+        .prediction-reason {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        /* --- Terminal Log --- */
+        .terminal {
+            background: var(--bg-terminal);
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--terminal-green);
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .log-entry { margin-bottom: 0.25rem; display: flex; gap: 0.5rem; }
+        .log-time { color: var(--text-secondary); opacity: 0.7; min-width: 80px; }
+        .log-type { color: var(--accent-blue); font-weight: bold; }
+        .log-msg { color: var(--terminal-green); }
+        .log-warn { color: var(--accent-orange); }
+        .log-error { color: var(--accent-red); }
+
+        /* --- Chart --- */
+        .chart-wrapper {
+            height: 250px;
+            width: 100%;
+        }
+
+        /* --- Animations --- */
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes flashRed { 
+            0% { background-color: rgba(239, 68, 68, 0); } 
+            50% { background-color: rgba(239, 68, 68, 0.2); } 
+            100% { background-color: rgba(239, 68, 68, 0); } 
+        }
+
+        .emergency-flash {
+            animation: flashRed 1s infinite;
+            border: 2px solid var(--accent-red) !important;
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: scan 3s linear infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+
+        .material-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        .cat-a { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .cat-b { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+        .cat-c { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+
+        /* Auto-Pilot Loader */
+        .loader-bar {
+            position: absolute;
+            bottom: 0; left: 0; height: 3px;
+            background: var(--accent-blue);
+            width: 0%;
+            transition: width 1s linear;
+        }
+        .sim-btn { position: relative; overflow: hidden; }
+
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo">
+            <span>⚡</span> SmartDrill Pro <span style="font-size:0.8em; color:var(--text-secondary); font-weight:400; margin-left:10px;">Operator Console</span>
+        </div>
+        <div class="system-status">
+            <div class="status-dot"></div>
+            SYSTEM ONLINE
+        </div>
+    </header>
+
+    <main class="main">
+        
+        <!-- Left Sidebar: Simulator Controls -->
+        <aside class="left-sidebar">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">🎮 Drill Simulator</div>
+                </div>
+                <div class="panel-body">
+                    <div class="control-group">
+                        <div class="control-label">SCENARIO INJECTION</div>
+                        
+                        <button class="sim-btn" onclick="runSimulation('coal')">
+                            <div>
+                                <div>Soft Coal Layer</div>
+                                <div class="sim-btn-meta">Detected at 10m depth</div>
+                            </div>
+                            <span class="material-badge cat-a">SOFT</span>
+                        </button>
+
+                        <button class="sim-btn" onclick="runSimulation('limestone')">
+                            <div>
+                                <div>Limestone Bed</div>
+                                <div class="sim-btn-meta">Medium hardness transition</div>
+                            </div>
+                            <span class="material-badge cat-b">MED</span>
+                        </button>
+
+                        <button class="sim-btn" onclick="runSimulation('copper')">
+                            <div>
+                                <div>Copper Deposit</div>
+                                <div class="sim-btn-meta">High value target</div>
+                            </div>
+                            <span class="material-badge cat-b">VAL</span>
+                        </button>
+
+                        <button class="sim-btn" onclick="runSimulation('granite')">
+                            <div>
+                                <div>Hard Granite</div>
+                                <div class="sim-btn-meta">High resistance / RPM Boost</div>
+                            </div>
+                            <span class="material-badge cat-c">HARD</span>
+                        </button>
+
+                        <button class="sim-btn" onclick="runSimulation('quartzite')">
+                            <div>
+                                <div>Quartzite Vein</div>
+                                <div class="sim-btn-meta">Extreme hardness / Alert</div>
+                            </div>
+                            <span class="material-badge cat-c">EXTREME</span>
+                        </button>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">AUTOMATION</div>
+                        <button class="sim-btn" id="autoPilotBtn" onclick="toggleAutoPilot()" style="background: rgba(59, 130, 246, 0.1); border-color: var(--accent-blue);">
+                            <div>
+                                <div>▶ Run Field Test Sequence</div>
+                                <div class="sim-btn-meta">Simulates 30s drilling run</div>
+                            </div>
+                            <div class="loader-bar" id="autoLoader"></div>
+                        </button>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">MANUAL OVERRIDE</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="sim-btn" onclick="triggerStop()" style="text-align: center; justify-content: center;">STOP</button>
+                            <button class="sim-btn" onclick="triggerEStop()" style="text-align: center; justify-content: center; border-color: var(--accent-red); color: var(--accent-red); font-weight: bold;">E-STOP</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center: Main Visualization -->
+        <section class="center-content">
+            
+            <!-- Pipeline Animation -->
+            <div class="panel" style="margin-bottom: 1.5rem;">
+                <div class="visual-pipeline">
+                    <div class="pipeline-line"></div>
+                    <div class="pipeline-progress" id="pipelineProgress"></div>
+                    
+                    <div class="pipeline-step" id="step-sensors">
+                        <div class="step-icon">📡</div>
+                        <div class="step-label">SENSORS</div>
+                    </div>
+                    <div class="pipeline-step" id="step-ai">
+                        <div class="step-icon">🧠</div>
+                        <div class="step-label">AI MODEL</div>
+                    </div>
+                    <div class="pipeline-step" id="step-decision">
+                        <div class="step-icon">⚙️</div>
+                        <div class="step-label">DECISION</div>
+                    </div>
+                    <div class="pipeline-step" id="step-motor">
+                        <div class="step-icon">🔌</div>
+                        <div class="step-label">MOTOR</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Stats -->
+            <div class="dashboard-grid">
+                
+                <!-- Prediction -->
+                <div class="panel prediction-box">
+                    <div class="panel-title" style="color: var(--accent-orange); margin-bottom: 0.5rem;">TARGET IDENTIFIED</div>
+                    <div class="prediction-material" id="predMaterial">--</div>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <span class="system-status" style="background: rgba(255,255,255,0.1); border:none;" id="predConfidence">0% Conf.</span>
+                        <span class="material-badge" id="predCat">--</span>
+                    </div>
+                    <div class="prediction-reason" id="predReason">
+                        > Waiting for sensor data...
+                    </div>
+                </div>
+
+                <!-- Recommended RPM -->
+                <div class="panel" style="padding: 1.5rem; justify-content: center; align-items: center; text-align: center;">
+                    <div class="panel-title">OPTIMAL RPM</div>
+                    <div class="big-stat" style="color: var(--accent-blue); font-size: 4.5rem;" id="recRpm">0</div>
+                    <div class="stat-label">System adjusted for efficiency</div>
+                </div>
+            </div>
+
+            <!-- Live Chart -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">📈 REAL-TIME TELEMETRY</div>
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="font-size: 0.8rem; color: var(--accent-orange);">● RPM</div>
+                        <div style="font-size: 0.8rem; color: var(--accent-blue);">● Current</div>
+                    </div>
+                </div>
+                <div class="panel-body" style="position: relative; padding: 0.5rem;">
+                    <div class="chart-wrapper">
+                        <canvas id="liveChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sensor Grid -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.5rem;">
+                <div class="panel" style="padding: 1rem; text-align: center;">
+                    <div style="font-size: 1.5rem;" id="valRpm">0</div>
+                    <div class="stat-label">RPM</div>
+                </div>
+                <div class="panel" style="padding: 1rem; text-align: center;">
+                    <div style="font-size: 1.5rem;" id="valCurrent">0</div>
+                    <div class="stat-label">Amps</div>
+                </div>
+                <div class="panel" style="padding: 1rem; text-align: center;">
+                    <div style="font-size: 1.5rem;" id="valVib">0</div>
+                    <div class="stat-label">Vibration</div>
+                </div>
+                <div class="panel" style="padding: 1rem; text-align: center;">
+                    <div style="font-size: 1.5rem;" id="valDepth">0</div>
+                    <div class="stat-label">Depth (m)</div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Sidebar: System Logic -->
+        <aside class="right-sidebar">
+            <div class="panel" style="height: 100%;">
+                <div class="panel-header">
+                    <div class="panel-title">💻 SYSTEM LOGIC</div>
+                </div>
+                <div class="panel-body" style="padding: 0; background: black; flex: 1;">
+                    <div class="terminal" id="systemLog">
+                        <div class="log-entry">
+                            <span class="log-time">14:00:00</span>
+                            <span class="log-msg">System initialized...</span>
+                        </div>
+                        <div class="log-entry">
+                            <span class="log-time">14:00:01</span>
+                            <span class="log-msg">Connected to Supabase Cloud</span>
+                        </div>
+                        <div class="log-entry">
+                            <span class="log-time">14:00:02</span>
+                            <span class="log-msg">ML Model loaded (v2.4)</span>
+                        </div>
+                        <div class="log-entry">
+                            <span class="log-time">14:00:02</span>
+                            <span class="log-msg">Waiting for serial stream...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <script>
+        // --- Configuration ---
+        const API_BASE = '';
+        const materials = {
+            coal: { rpm: 450, current: 6.5, vib: 20, hardness: 'Low', cat: 'A' },
+            limestone: { rpm: 850, current: 9.2, vib: 35, hardness: 'Med', cat: 'B' },
+            copper: { rpm: 950, current: 9.8, vib: 40, hardness: 'Med', cat: 'B' },
+            granite: { rpm: 2300, current: 14.5, vib: 85, hardness: 'High', cat: 'C' },
+            quartzite: { rpm: 2800, current: 16.0, vib: 95, hardness: 'Extreme', cat: 'C' }
+        };
+
+        // --- Chart Setup ---
+        const ctx = document.getElementById('liveChart').getContext('2d');
+        const liveChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [
+                    {
+                        label: 'RPM',
+                        data: Array(20).fill(0),
+                        borderColor: '#f97316',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Current',
+                        data: Array(20).fill(0),
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false, min: 0, max: 3500 },
+                    y1: { display: false, min: 0, max: 20 }
+                }
+            }
+        });
+
+        // --- Logic ---
+        function addLog(msg, type = 'INFO') {
+            const log = document.getElementById('systemLog');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            let colorClass = 'log-msg';
+            if (type === 'WARN') colorClass = 'log-warn';
+            if (type === 'ERROR') colorClass = 'log-error';
+
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-type">[${type}]</span>
+                <span class="${colorClass}">${msg}</span>
+            `;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function animatePipeline() {
+            const steps = ['sensors', 'ai', 'decision', 'motor'];
+            const progress = document.getElementById('pipelineProgress');
+            
+            // Reset
+            steps.forEach(s => document.getElementById(`step-${s}`).classList.remove('active'));
+            progress.style.width = '0%';
+
+            // Sequence
+            setTimeout(() => {
+                document.getElementById('step-sensors').classList.add('active');
+                progress.style.width = '33%';
+            }, 100);
+
+            setTimeout(() => {
+                document.getElementById('step-ai').classList.add('active');
+                progress.style.width = '66%';
+            }, 600);
+
+            setTimeout(() => {
+                document.getElementById('step-decision').classList.add('active');
+                progress.style.width = '100%';
+            }, 1200);
+
+            setTimeout(() => {
+                document.getElementById('step-motor').classList.add('active');
+            }, 1800);
+        }
+
+        async function runSimulation(materialKey) {
+            const mat = materials[materialKey];
+            
+            // UI Feedback
+            document.querySelectorAll('.sim-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Log Sequence
+            addLog(`Injecting scenario: ${materialKey.toUpperCase()}`, 'USER');
+            addLog(`Reading sensor stream...`);
+            
+            // 1. Simulate Sensor Spike
+            animatePipeline();
+            
+            // 2. Call API (mocking the delay)
+            setTimeout(() => {
+                addLog(`Sensor Spike: Vib=${mat.vib} | Amp=${mat.current}A`, 'WARN');
+            }, 500);
+
+            setTimeout(async () => {
+                addLog(`AI Model analyzing pattern...`);
+                
+                try {
+                    // Actual API Call
+                    const response = await fetch(`${API_BASE}/log`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            rpm: mat.rpm,
+                            current: mat.current,
+                            vibration_readings: [mat.vib, mat.vib+2, mat.vib-1],
+                            depth: 25.5
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    // Update UI
+                    updateDashboard(result.prediction, mat);
+                    addLog(`Identified: ${result.prediction.material} (${result.prediction.confidence.toFixed(1)}%)`, 'SUCCESS');
+                    addLog(`Adjusting Motor -> Target: ${result.prediction.recommended_rpm} RPM`);
+                    
+                } catch (e) {
+                    addLog(`Connection Error: ${e.message}`, 'ERROR');
+                    // Fallback visual update
+                    updateDashboard({
+                        material: materialKey.toUpperCase(),
+                        confidence: 94.5,
+                        recommended_rpm: mat.rpm,
+                        category: mat.cat
+                    }, mat);
+                }
+
+            }, 1200);
+        }
+
+        function updateDashboard(pred, matData) {
+            // Stats
+            document.getElementById('predMaterial').textContent = pred.material;
+            document.getElementById('predConfidence').textContent = `${pred.confidence.toFixed(1)}% Conf.`;
+            document.getElementById('recRpm').textContent = pred.recommended_rpm;
+            
+            // Reason
+            const reason = `> High vibration (${matData.vib}) detected.\n> Hardness correlated to ${pred.material}.\n> Optimizing torque.`;
+            document.getElementById('predReason').innerText = reason;
+
+            // Badges
+            const catEl = document.getElementById('predCat');
+            catEl.textContent = `CAT ${pred.category}`;
+            catEl.className = `material-badge cat-${pred.category.toLowerCase()}`;
+
+            // Sensor Values
+            document.getElementById('valRpm').textContent = pred.recommended_rpm;
+            document.getElementById('valCurrent').textContent = matData.current;
+            document.getElementById('valVib').textContent = matData.vib;
+            document.getElementById('valDepth').textContent = (Math.random() * 50).toFixed(1);
+
+            // Chart Update
+            updateChart(pred.recommended_rpm, matData.current);
+        }
+
+        function updateChart(targetRpm, targetAmp) {
+            const dataRpm = liveChart.data.datasets[0].data;
+            const dataAmp = liveChart.data.datasets[1].data;
+
+            // Shift and add new target (with some noise)
+            dataRpm.shift();
+            dataRpm.push(targetRpm + (Math.random() * 50 - 25));
+            
+            dataAmp.shift();
+            dataAmp.push(targetAmp + (Math.random() * 1 - 0.5));
+            
+            liveChart.update();
+        }
+
+        // Live Heartbeat
+        setInterval(() => {
+            // Keep chart alive with noise if no interaction
+            const currentRpm = parseFloat(document.getElementById('valRpm').textContent);
+            const currentAmp = parseFloat(document.getElementById('valCurrent').textContent);
+            
+            if (currentRpm > 0) {
+                updateChart(currentRpm, currentAmp);
+            }
+        }, 1000);
+
+        // Init
+        addLog('Dashboard ready. Waiting for input...');
+
+        // --- Auto Pilot Logic ---
+        let autoPilotInterval = null;
+        let isAutoRunning = false;
+
+        async function toggleAutoPilot() {
+            const btn = document.getElementById('autoPilotBtn');
+            const loader = document.getElementById('autoLoader');
+            
+            if (isAutoRunning) {
+                // Stop
+                clearInterval(autoPilotInterval);
+                isAutoRunning = false;
+                btn.innerHTML = `<div><div>▶ Run Field Test Sequence</div><div class="sim-btn-meta">Simulates 30s drilling run</div></div><div class="loader-bar" id="autoLoader"></div>`;
+                addLog('Field Test Sequence ABORTED by user.', 'WARN');
+                return;
+            }
+
+            // Start
+            isAutoRunning = true;
+            btn.innerHTML = `<div><div>⏹ Stop Sequence</div><div class="sim-btn-meta">Running automated test...</div></div><div class="loader-bar" id="autoLoader" style="width:0%"></div>`;
+            addLog('INITIATING AUTOMATED FIELD TEST SEQUENCE...', 'INFO');
+
+            const sequence = [
+                { time: 0, msg: "Drill started. Lowering bit...", action: null },
+                { time: 2, msg: "Surface contact. Detecting soil...", action: "coal" },
+                { time: 8, msg: "Depth 10m. Transition to harder layer...", action: "limestone" },
+                { time: 15, msg: "Mineral vein detected! Analyzing...", action: "copper" },
+                { time: 22, msg: "Bedrock hit. Maximum power required.", action: "granite" },
+                { time: 28, msg: "Test complete. Retracting bit.", action: null }
+            ];
+
+            let startTime = Date.now();
+            let duration = 30000; // 30s
+
+            autoPilotInterval = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                let progress = Math.min((elapsed / duration) * 100, 100);
+                
+                // Update loader
+                const currentLoader = document.getElementById('autoLoader');
+                if(currentLoader) currentLoader.style.width = `${progress}%`;
+
+                // Check sequence
+                if (elapsed >= duration) {
+                    clearInterval(autoPilotInterval);
+                    isAutoRunning = false;
+                    const b = document.getElementById('autoPilotBtn');
+                    if(b) b.innerHTML = `<div><div>▶ Run Field Test Sequence</div><div class="sim-btn-meta">Test Complete</div></div><div class="loader-bar" id="autoLoader"></div>`;
+                    addLog('Field Test Sequence COMPLETED successfully.', 'SUCCESS');
+                    return;
+                }
+            }, 100);
+
+            // Execute steps
+            for (let step of sequence) {
+                setTimeout(() => {
+                    if (!isAutoRunning) return;
+                    
+                    if (step.msg) addLog(step.msg, 'INFO');
+                    
+                    if (step.action) {
+                        runSimulation(step.action);
+                    } else if (step.time === 28) {
+                        // Reset at end
+                        updateDashboard({ material: '--', confidence: 0, recommended_rpm: 0, category: '-' }, { current: 0, vib: 0 });
+                    }
+                }, step.time * 1000);
+            }
+        }
+
+        // --- Manual Override Logic ---
+        function triggerStop() {
+            // Stop Auto Pilot
+            if (isAutoRunning) {
+                toggleAutoPilot(); // This handles the stop logic
+            }
+            
+            // Stop any visual animations
+            document.querySelectorAll('.pipeline-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('pipelineProgress').style.width = '0%';
+            
+            addLog('OPERATOR INITIATED STOP.', 'WARN');
+            addLog('Motor idling...');
+            
+            // Visual reset without clearing everything
+            document.getElementById('valRpm').textContent = '0';
+            document.getElementById('valCurrent').textContent = '0';
+        }
+
+        function triggerEStop() {
+            triggerStop(); // First stop everything
+
+            addLog('!!! EMERGENCY STOP TRIGGERED !!!', 'ERROR');
+            addLog('CUTTING POWER TO ALL SYSTEMS.', 'ERROR');
+
+            // Flash screen
+            document.body.classList.add('emergency-flash');
+            
+            // Hard reset values
+            updateDashboard({ material: 'E-STOP', confidence: 0, recommended_rpm: 0, category: 'HALT' }, { current: 0, vib: 0, rpm: 0 });
+            
+            document.getElementById('predMaterial').style.color = 'var(--accent-red)';
+            document.getElementById('predReason').textContent = '> SAFETY INTERLOCK ENGAGED.\n> MANUAL RESET REQUIRED.';
+
+            // Remove flash after 3s
+            setTimeout(() => {
+                document.body.classList.remove('emergency-flash');
+                document.getElementById('predMaterial').style.color = 'var(--accent-orange)';
+                addLog('Safety locks engaged. System halted.', 'INFO');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>

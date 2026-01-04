@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Drill Arm - TEST</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a0f;color:#fff;min-height:100vh}
+.hdr{background:#14141e;padding:10px 15px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #00d4ff33}
+.logo{font-weight:600;display:flex;align-items:center;gap:8px}
+.logo span{background:linear-gradient(135deg,#00d4ff,#00ff88);width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.status{font-size:12px;color:#666}
+.status.on{color:#00ff88}
+.main{padding:15px;max-width:800px;margin:0 auto}
+
+.servo-card{background:#16161f;border-radius:12px;padding:15px;margin-bottom:12px;border:1px solid #ffffff08}
+.servo-header{display:flex;justify-content:space-between;margin-bottom:12px}
+.servo-name{color:#00d4ff;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.servo-range{color:#666;font-size:11px}
+
+.slider-container{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.slider-container input[type="range"]{flex:1;height:8px;-webkit-appearance:none;background:#1a1a24;border-radius:4px;outline:none}
+.slider-container input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;background:linear-gradient(135deg,#00d4ff,#00ff88);border-radius:50%;cursor:pointer;box-shadow:0 2px 8px #00d4ff66}
+.angle-display{background:#0a0a0f;padding:8px 12px;border-radius:6px;min-width:60px;text-align:center;font-weight:700;font-size:16px}
+
+.speed-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.speed-row label{color:#666;font-size:11px}
+.speed-row input{width:80px;height:4px;-webkit-appearance:none;background:#1a1a24;border-radius:2px}
+.speed-row input::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:#00d4ff;border-radius:50%;cursor:pointer}
+.speed-val{color:#666;font-size:11px;min-width:24px}
+
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.btn{flex:1;min-width:70px;padding:12px 8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.15s}
+.btn-home{background:#16161f;color:#fff;border:1px solid #ffffff15}
+.btn-home:active{background:#00d4ff;color:#000}
+.btn-stop{background:#ff3860;color:#fff}
+.btn-stop.active{animation:pulse 0.4s infinite alternate}
+@keyframes pulse{to{box-shadow:0 0 20px #ff386088}}
+
+.preview{background:#16161f;border-radius:12px;padding:12px;border:1px solid #ffffff08}
+.preview-title{color:#666;font-size:11px;margin-bottom:8px}
+#canvas{width:100%;height:140px;background:#0a0a0f;border-radius:8px;display:block}
+
+.modal-bg{display:none;position:fixed;inset:0;background:#000c;z-index:100;align-items:center;justify-content:center;padding:15px}
+.modal-bg.open{display:flex}
+.modal{background:#16161f;border-radius:12px;width:100%;max-width:380px;max-height:80vh;overflow:auto}
+.modal-head{padding:15px;border-bottom:1px solid #ffffff10;display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{font-size:16px}
+.modal-close{background:none;border:none;color:#666;font-size:24px;cursor:pointer}
+.modal-body{padding:15px}
+.setting-group{margin-bottom:20px}
+.setting-title{color:#00d4ff;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.setting-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.setting-row label{color:#888;font-size:13px}
+.setting-row input{width:55px;padding:6px;background:#0a0a0f;border:1px solid #ffffff15;border-radius:4px;color:#fff;text-align:center}
+.modal-foot{padding:15px;border-top:1px solid #ffffff10;display:flex;gap:10px}
+.modal-foot button{flex:1;padding:10px;border:none;border-radius:6px;font-weight:600;cursor:pointer}
+.btn-cancel{background:#1a1a24;color:#fff}
+.btn-save{background:#00d4ff;color:#000}
+
+.test-banner{background:#ff9800;color:#000;text-align:center;padding:8px;font-size:12px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="test-banner">⚠️ TEST MODE - No ESP32 Connected (UI Preview Only)</div>
+
+<header class="hdr">
+  <div class="logo"><span>⚙</span> Drill Arm</div>
+  <div class="status" id="status">● Offline</div>
+</header>
+
+<main class="main">
+  <!-- SERVO 0: BASE -->
+  <div class="servo-card">
+    <div class="servo-header">
+      <span class="servo-name">BASE</span>
+      <span class="servo-range" id="range0">0° - 180°</span>
+    </div>
+    <div class="slider-container">
+      <input type="range" id="servo0" min="0" max="180" value="90" oninput="moveServo(0,this.value)">
+      <div class="angle-display" id="angle0">90°</div>
+    </div>
+    <div class="speed-row">
+      <label>Speed:</label>
+      <input type="range" id="speed0" min="1" max="100" value="20" oninput="setSpeed(0,this.value)">
+      <span class="speed-val" id="spdval0">20</span>
+    </div>
+  </div>
+
+  <!-- SERVO 1: MIDDLE -->
+  <div class="servo-card">
+    <div class="servo-header">
+      <span class="servo-name">MIDDLE</span>
+      <span class="servo-range" id="range1">0° - 90°</span>
+    </div>
+    <div class="slider-container">
+      <input type="range" id="servo1" min="0" max="90" value="45" oninput="moveServo(1,this.value)">
+      <div class="angle-display" id="angle1">45°</div>
+    </div>
+    <div class="speed-row">
+      <label>Speed:</label>
+      <input type="range" id="speed1" min="1" max="100" value="25" oninput="setSpeed(1,this.value)">
+      <span class="speed-val" id="spdval1">25</span>
+    </div>
+  </div>
+
+  <!-- SERVO 2: TOP -->
+  <div class="servo-card">
+    <div class="servo-header">
+      <span class="servo-name">TOP</span>
+      <span class="servo-range" id="range2">0° - 150°</span>
+    </div>
+    <div class="slider-container">
+      <input type="range" id="servo2" min="0" max="150" value="75" oninput="moveServo(2,this.value)">
+      <div class="angle-display" id="angle2">75°</div>
+    </div>
+    <div class="speed-row">
+      <label>Speed:</label>
+      <input type="range" id="speed2" min="1" max="100" value="25" oninput="setSpeed(2,this.value)">
+      <span class="speed-val" id="spdval2">25</span>
+    </div>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="btns">
+    <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
+                                        <button class="btn btn-home" onclick="resetESP()">🔄 Reset</button>
+    <button class="btn btn-home" onclick="openSettings()">⚙️ Settings</button>
+    <button class="btn btn-stop" id="stopBtn" onclick="toggleStop()">🛑 STOP</button>
+  </div>
+
+  <!-- ARM PREVIEW -->
+  <div class="preview">
+    <div class="preview-title">Arm Preview</div>
+    <canvas id="canvas"></canvas>
+  </div>
+</main>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>⚙️ Settings</h3>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-group">
+        <div class="setting-title">Servo Limits</div>
+        <div class="setting-row"><label>BASE Min:</label><input type="number" id="min0" value="0"></div>
+        <div class="setting-row"><label>BASE Max:</label><input type="number" id="max0" value="180"></div>
+        <div class="setting-row"><label>MIDDLE Min:</label><input type="number" id="min1" value="0"></div>
+        <div class="setting-row"><label>MIDDLE Max:</label><input type="number" id="max1" value="90"></div>
+        <div class="setting-row"><label>TOP Min:</label><input type="number" id="min2" value="0"></div>
+        <div class="setting-row"><label>TOP Max:</label><input type="number" id="max2" value="150"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-save" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var estop = false;
+var servos = [
+  {min:0, max:180, speed:20, angle:90},
+  {min:0, max:90, speed:25, angle:45},
+  {min:0, max:150, speed:25, angle:75}
+];
+
+function moveServo(i, val) {
+  val = parseInt(val);
+  document.getElementById('angle' + i).textContent = val + '°';
+  servos[i].angle = val;
+  drawArm();
+  console.log('Servo ' + i + ' -> ' + val + '°');
+}
+
+function setSpeed(i, val) {
+  servos[i].speed = parseInt(val);
+  document.getElementById('spdval' + i).textContent = val;
+  console.log('Speed ' + i + ' -> ' + val);
+}
+
+function goHome() {
+  servos[0].angle = 90;
+  servos[1].angle = 45;
+  servos[2].angle = 75;
+  document.getElementById('servo0').value = 90;
+  document.getElementById('servo1').value = 45;
+  document.getElementById('servo2').value = 75;
+  document.getElementById('angle0').textContent = '90°';
+  document.getElementById('angle1').textContent = '45°';
+  document.getElementById('angle2').textContent = '75°';
+  drawArm();
+  console.log('HOME');
+}
+
+function toggleStop() {
+  estop = !estop;
+  var btn = document.getElementById('stopBtn');
+  if (estop) {
+    btn.className = 'btn btn-stop active';
+    btn.textContent = '🛑 RELEASE';
+  } else {
+    btn.className = 'btn btn-stop';
+    btn.textContent = '🛑 STOP';
+  }
+  console.log('E-STOP: ' + estop);
+}
+
+function resetESP() {
+  if (confirm('Reset ESP32? This will stop all movement at current positions and clear all state.')) {
+    // Keep current positions - don't reset to home
+    // Just clear E-STOP and send reset command
+    estop = false;
+    var btn = document.getElementById('stopBtn');
+    btn.className = 'btn btn-stop';
+    btn.textContent = '🛑 STOP';
+    
+    // Send reset command (in test mode, just log)
+    console.log('ESP32 Reset - Stopping at current positions and clearing state');
+    console.log('Current positions:', servos[0].angle + '°, ' + servos[1].angle + '°, ' + servos[2].angle + '°');
+    
+    // In real ESP32 mode, this would send: send([0x09]);
+    // Servos will stop at their current positions, state cleared
+    
+    drawArm();
+    alert('Reset complete! Servos stopped at current positions. State cleared.');
+  }
+}
+
+function openSettings() {
+  for (var i = 0; i < 3; i++) {
+    document.getElementById('min' + i).value = servos[i].min;
+    document.getElementById('max' + i).value = servos[i].max;
+  }
+  document.getElementById('modal').className = 'modal-bg open';
+}
+
+function closeSettings() {
+  document.getElementById('modal').className = 'modal-bg';
+}
+
+function saveSettings() {
+  for (var i = 0; i < 3; i++) {
+    var min = parseInt(document.getElementById('min' + i).value);
+    var max = parseInt(document.getElementById('max' + i).value);
+    if (min < max) {
+      servos[i].min = min;
+      servos[i].max = max;
+      var slider = document.getElementById('servo' + i);
+      slider.min = min;
+      slider.max = max;
+      document.getElementById('range' + i).textContent = min + '° - ' + max + '°';
+    }
+  }
+  closeSettings();
+  console.log('Settings saved');
+}
+
+function drawArm() {
+  var c = document.getElementById('canvas');
+  var ctx = c.getContext('2d');
+  c.width = c.offsetWidth * 2;
+  c.height = c.offsetHeight * 2;
+  ctx.scale(2, 2);
+  
+  var w = c.offsetWidth, h = c.offsetHeight;
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, w, h);
+  
+  var bx = w / 2, by = h - 15;
+  var l1 = 45, l2 = 35;
+  
+  var a0 = (servos[0].angle - 90) * Math.PI / 180;
+  var a1 = (180 - servos[1].angle) * Math.PI / 180;
+  var a2 = (180 - servos[2].angle) * Math.PI / 180;
+  
+  var j1x = bx + Math.sin(a0) * 12;
+  var j1y = by - 12;
+  var j2x = j1x + Math.cos(a1) * l1;
+  var j2y = j1y - Math.sin(a1) * l1;
+  var ex = j2x + Math.cos(a1 + a2 - Math.PI) * l2;
+  var ey = j2y - Math.sin(a1 + a2 - Math.PI) * l2;
+  
+  // Base
+  ctx.fillStyle = '#00d4ff';
+  ctx.beginPath();
+  ctx.arc(bx, by, 15, Math.PI, 0);
+  ctx.fill();
+  
+  // Arm 1
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(j1x, j1y);
+  ctx.lineTo(j2x, j2y);
+  ctx.stroke();
+  
+  // Arm 2
+  ctx.strokeStyle = '#00d4ff';
+  ctx.beginPath();
+  ctx.moveTo(j2x, j2y);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+  
+  // Joints
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(j1x, j1y, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(j2x, j2y, 4, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Drill tip
+  ctx.fillStyle = '#ff3860';
+  ctx.beginPath();
+  ctx.arc(ex, ey, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Initialize
+window.onload = function() {
+  drawArm();
+};
+</script>
+</body>
+</html>
+
