@@ -11,6 +11,125 @@
 
 ---
 
+## ⚠️ Important Notice
+
+**🚧 Repository Status: Partial Upload**
+
+> **Note:** Some repositories and components are still not added to this repository. This is a work in progress and additional modules, documentation, and code will be uploaded soon. The complete system includes additional components that are currently being prepared for upload.
+
+**Currently Included:**
+- ✅ GPS Tracker - Underground Vehicle Tracking System
+- ✅ Advanced EHS Simba Drill Monitoring System
+- ✅ Robotic Drilling Arm Controller
+- ✅ Comprehensive Documentation
+
+**Coming Soon:**
+- 🔄 Additional frontend dashboards
+- 🔄 Mobile applications
+- 🔄 Additional ML models and datasets
+- 🔄 Deployment configurations
+- 🔄 Demo videos and screenshots
+
+---
+
+## 📹 Demo Videos & Screenshots
+
+### System Overview Video
+
+<!-- Option 1: YouTube Video (Recommended) -->
+<!-- Replace YOUR_VIDEO_ID with your actual YouTube video ID -->
+[![Watch the Full System Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+
+*🎬 Click the image above to watch the complete system demonstration*
+
+---
+
+### Component Demos
+
+#### 1. GPS Tracker - 3D Underground Visualization
+
+<!-- Replace with your actual video link after uploading -->
+<!-- GitHub supports direct .mp4 upload - just drag and drop here -->
+
+**Features Shown:**
+- Real-time 3D mine tunnel rendering
+- Vehicle tracking across multiple levels
+- Playback controls and timeline
+- Emergency alert system
+
+<!-- Alternatively, use a GIF for quick preview -->
+<!-- ![GPS Tracker Demo](./assets/gps-tracker-demo.gif) -->
+
+---
+
+#### 2. EHS Simba - AI Drill Monitoring
+
+<!-- Add your video here -->
+
+**Features Shown:**
+- Material prediction in real-time
+- Predictive maintenance dashboard
+- Energy optimization metrics
+- Safety monitoring alerts
+
+---
+
+#### 3. Robotic Drilling Arm Control
+
+<!-- Add your video here -->
+
+**Features Shown:**
+- WebSocket real-time control
+- 3-servo arm movement
+- Live 2D visualization
+- Emergency stop functionality
+
+---
+
+### 📸 Screenshots
+
+<details>
+<summary>Click to view screenshots</summary>
+
+#### GPS Tracker - 3D View
+<!-- ![3D Mine View](./assets/screenshots/gps-3d-view.png) -->
+*Coming soon*
+
+#### GPS Tracker - 2D Map View
+<!-- ![2D Map View](./assets/screenshots/gps-2d-view.png) -->
+*Coming soon*
+
+#### EHS Simba - Dashboard
+<!-- ![EHS Dashboard](./assets/screenshots/ehs-dashboard.png) -->
+*Coming soon*
+
+#### Drilling Arm - Control Interface
+<!-- ![Drilling Arm UI](./assets/screenshots/drilling-arm-ui.png) -->
+*Coming soon*
+
+</details>
+
+---
+
+### 🎥 How to Add Your Videos
+
+**Option 1: YouTube (Recommended for large videos)**
+1. Upload your video to YouTube
+2. Get the video ID from the URL (e.g., `https://youtube.com/watch?v=ABC123` → ID is `ABC123`)
+3. Replace `YOUR_VIDEO_ID` in the markdown above
+
+**Option 2: Direct Upload to GitHub**
+1. Edit this README on GitHub.com
+2. Drag and drop your `.mp4` or `.mov` file (max 10MB)
+3. GitHub will automatically generate the embed code
+
+**Option 3: GIF Animation**
+1. Convert your video to GIF using [ezgif.com](https://ezgif.com/video-to-gif)
+2. Create an `assets` folder in the repository
+3. Upload the GIF and reference it: `![Demo](./assets/demo.gif)`
+
+---
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
